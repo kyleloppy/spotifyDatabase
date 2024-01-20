@@ -38,16 +38,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>se.michaelthelin.spotify</groupId>
-			<artifactId>spotify-web-api-java</artifactId>
-			<version>8.3.4</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>de.sonallux.spotify</groupId>
-			<artifactId>spotify-web-api-java</artifactId>
-			<version>4.1.0</version>
-		</dependency>
-
 	</dependencies>
 
 	<build>

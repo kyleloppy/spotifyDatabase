@@ -1,51 +1,54 @@
 package com.example.spotifyDatabase.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import org.apache.hc.core5.http.ParseException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.Recommendations;
-import se.michaelthelin.spotify.model_objects.specification.User;
-import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
-import se.michaelthelin.spotify.requests.data.users_profile.GetUsersProfileRequest;
-
-import java.io.IOException;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SpotifyUserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyUserService.class);
-    private final ObjectMapper mapper;
-    @Value("${spotify.api-key}")
-    private static String API_KEY;
+    private final String CLIENT_CREDENTIALS = "client_credentials";
 
-    private static final SpotifyApi spotifyApi = new SpotifyApi.Builder().setAccessToken(API_KEY).build();
+    public ResponseEntity<String> getAuthToken(String clientId, String clientSecret) {
+        WebClient webClient = WebClient.builder().build();
 
-    private static GetUsersProfileRequest getUsersProfileRequest(String userId) {
-        return spotifyApi.getUsersProfile(userId).build();
+        String bearer =
+                Objects.requireNonNull(
+                webClient.post()
+                .uri("https://accounts.spotify.com/api/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData("client_id", clientId)
+                    .with("client_secret", clientSecret)
+                    .with("grant_type", CLIENT_CREDENTIALS))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block()
+                        .get("access_token").asText());
+
+        return ResponseEntity.ofNullable(bearer);
+
+
     }
 
-    private static GetRecommendationsRequest getUserRecommendationsRequest(String genre) {
-        return spotifyApi.getRecommendations().seed_genres(genre).build();
-    }
-    public static ResponseEntity<String> getUserProfile(String userId) throws IOException, ParseException, SpotifyWebApiException {
-        User user = getUsersProfileRequest(userId).execute();
-        return ResponseEntity.ofNullable(user.getDisplayName());
-    }
-
-    public static ResponseEntity<Integer> getUserRecommendations(String genre) throws IOException, ParseException, SpotifyWebApiException {
-        Recommendations recommendations = getUserRecommendationsRequest(genre).execute();
-        return ResponseEntity.ofNullable(recommendations.getTracks().length);
-    }
-
-
-
-
-
+//    public ResponseEntity<String> getUserProfile(String bearerToken) {
+//        WebClient webClient = WebClient.builder().build();
+//
+//        String response = webClient.get()
+//                .uri("https://api.spotify.com/v1/me")
+//                .header("Authorization", String.format("Bearer %s", bearerToken))
+//                .retrieve()
+//                .bodyToMono(String.class)
+//                .block();
+//            return ResponseEntity.ofNullable(response);
+//    }
 }

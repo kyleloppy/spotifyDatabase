@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SpotifyUser {
-    private String spotifyId;
-    private String userName;
+    private String clientId;
+    private String clientSecret;
 }
